@@ -1,5 +1,7 @@
 "use client";
 
+// The form on the Home page: a repo URL and an optional folder.
+// It checks the input in the browser first, then asks the server to scan and opens the report.
 import { useRef, useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRightIcon, LockIcon, SpinnerIcon } from "./Icons";
@@ -7,21 +9,24 @@ import { folderSchema, repoUrlSchema, scanRequestSchema, type ScanField } from "
 
 type FieldErrors = Partial<Record<ScanField, string>>;
 
+// Shared input styles, plus one set for "looks fine" and one for "has an error".
 const inputBase =
-  "h-12 w-full rounded-[10px] border bg-white px-3.5 font-mono text-[15px] text-foreground " +
-  "placeholder:text-zinc-500 focus:outline-none focus:ring-2 disabled:bg-zinc-50";
-const inputOk = "border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900/10";
-const inputBad = "border-red-600 focus:border-red-600 focus:ring-red-600/15";
+  "h-12 w-full rounded-[10px] border bg-surface px-3.5 font-mono text-[15px] text-foreground " +
+  "placeholder:text-muted focus:outline-none focus:ring-2 disabled:bg-subtle";
+const inputOk = "border-line-strong focus:border-foreground focus:ring-foreground/10";
+const inputBad = "border-danger focus:border-danger focus:ring-danger/15";
 
-// Validate one field on its own (used when the user leaves the field)
-function validateField(field: ScanField, value: string): string | undefined {
+// Validate one field on its own (used when the user leaves the field).
+// Returns the error message, or undefined when the value is fine.
+const validateField = (field: ScanField, value: string): string | undefined => {
   const schema = field === "url" ? repoUrlSchema : folderSchema;
   const result = schema.safeParse(value);
   return result.success ? undefined : result.error.issues[0].message;
-}
+};
 
-export default function ScanForm() {
+const ScanForm = () => {
   const router = useRouter();
+  // Refs let us move keyboard focus to the first field with a problem
   const urlRef = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement>(null);
 
@@ -30,19 +35,22 @@ export default function ScanForm() {
   const [formError, setFormError] = useState(""); // errors from the server
   const [loading, setLoading] = useState(false);
 
-  function handleChange(field: ScanField, value: string) {
+  // Save what the user typed, and clear that field's error as soon as they start fixing it.
+  const handleChange = (field: ScanField, value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
-    if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined })); // clear as they fix it
-  }
+    if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined }));
+  };
 
-  function handleBlur(field: ScanField) {
+  // Check a field when the user leaves it.
+  const handleBlur = (field: ScanField) => {
     // Don't nag about an empty URL just because they clicked away
     if (field === "url" && !values.url.trim()) return;
     setErrors((e) => ({ ...e, [field]: validateField(field, values[field]) }));
-  }
+  };
 
-  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // Validate everything, call the scan API, and go to the report page.
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault(); // stop the browser from reloading the page
     setFormError("");
 
     // Same schema as the server, so users see mistakes instantly
@@ -66,6 +74,7 @@ export default function ScanForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data), // cleaned values, e.g. "src" → "src/"
       });
+      // If the server sent something that isn't JSON, fall back to an empty object
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Scan failed. Please try again.");
       router.push(`/report/${data.id}`);
@@ -73,16 +82,17 @@ export default function ScanForm() {
       setFormError(err instanceof Error ? err.message : "Scan failed. Please try again.");
       setLoading(false);
     }
-  }
+  };
 
   return (
     <form
       onSubmit={handleSubmit}
       noValidate // we show our own clear messages instead of the browser's popups
       aria-busy={loading}
-      className="flex w-full max-w-190 flex-col gap-3.5 rounded-2xl border border-line bg-white p-5"
+      className="flex w-full max-w-190 flex-col gap-3.5 rounded-2xl border border-line bg-surface p-5"
     >
       <div className="flex flex-wrap gap-3">
+        {/* Repo URL field (takes most of the row) */}
         <div className="flex min-w-0 flex-[999_1_360px] flex-col gap-1.5">
           <label htmlFor="repo" className="text-sm font-semibold">GitHub repo URL</label>
           <input
@@ -104,10 +114,11 @@ export default function ScanForm() {
             disabled={loading}
           />
           {errors.url && (
-            <p id="repo-error" className="text-sm font-medium text-red-700">{errors.url}</p>
+            <p id="repo-error" className="text-sm font-medium text-danger">{errors.url}</p>
           )}
         </div>
 
+        {/* Optional folder field */}
         <div className="flex min-w-0 flex-[1_1_180px] flex-col gap-1.5">
           <label htmlFor="folder" className="text-sm font-semibold">
             Folder <span className="font-normal text-muted">(optional)</span>
@@ -126,16 +137,18 @@ export default function ScanForm() {
             className={`${inputBase} ${errors.folder ? inputBad : inputOk}`}
             disabled={loading}
           />
+          {/* Show the error if there is one, otherwise a helpful hint */}
           {errors.folder ? (
-            <p id="folder-error" className="text-sm font-medium text-red-700">{errors.folder}</p>
+            <p id="folder-error" className="text-sm font-medium text-danger">{errors.folder}</p>
           ) : (
             <p id="folder-hint" className="text-sm text-muted">Leave empty to scan the whole repo.</p>
           )}
         </div>
       </div>
 
+      {/* role="alert" makes screen readers announce server errors right away */}
       {formError && (
-        <p role="alert" className="text-sm font-medium text-red-700">{formError}</p>
+        <p role="alert" className="text-sm font-medium text-danger">{formError}</p>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -146,7 +159,7 @@ export default function ScanForm() {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-zinc-900 px-5.5 font-semibold text-white hover:bg-zinc-800 disabled:opacity-70"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-primary px-5.5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-70"
         >
           {loading ? (
             <>
@@ -163,4 +176,6 @@ export default function ScanForm() {
       </div>
     </form>
   );
-}
+};
+
+export default ScanForm;

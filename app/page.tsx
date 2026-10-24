@@ -1,13 +1,13 @@
+// The Home page. It only puts the sections in order; each section lives in its own component.
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
 import RulesList from "@/components/RulesList";
 
-
 const GITHUB_URL = "https://github.com/YOUR-USERNAME/upgradelens"; // replace with your repo
 
-export default function Home() {
+const Home = () => {
   return (
     <>
       <Header githubUrl={GITHUB_URL} />
@@ -19,4 +19,6 @@ export default function Home() {
       <Footer />
     </>
   );
-}
+};
+
+export default Home;

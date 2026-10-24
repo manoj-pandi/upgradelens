@@ -1,14 +1,20 @@
+// The top section of the Home page: headline, short pitch, and the scan form.
 import Link from "next/link";
 import Container from "./Container";
 import ScanForm from "./ScanForm";
 
-// sampleReportHref: set it to a real saved report (e.g. "/report/<id>") once you have one.
-export default function Hero({ sampleReportHref }: { sampleReportHref?: string }) {
+interface HeroProps {
+  // Set it to a real saved report (e.g. "/report/<id>") once you have one.
+  sampleReportHref?: string;
+}
+
+const Hero = ({ sampleReportHref }: HeroProps) => {
   return (
     <section>
       <Container className="flex flex-col items-start gap-5 pt-16 pb-16 sm:pt-22 sm:pb-18">
-        <span className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm font-medium text-zinc-700">
-          <span className="size-2 rounded-full bg-blue-700" aria-hidden="true" />
+        {/* Small pill that says which upgrade we support right now */}
+        <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium text-muted">
+          <span className="size-2 rounded-full bg-link" aria-hidden="true" />
           Now checking: Express 4 → 5
         </span>
 
@@ -25,10 +31,11 @@ export default function Hero({ sampleReportHref }: { sampleReportHref?: string }
           <ScanForm />
         </div>
 
+        {/* Only shown once a sample report exists */}
         {sampleReportHref && (
           <p className="text-[15px] text-muted">
             Not sure where to start?{" "}
-            <Link href={sampleReportHref} className="text-blue-700 underline-offset-2 hover:underline">
+            <Link href={sampleReportHref} className="text-link underline-offset-2 hover:underline">
               See a sample report
             </Link>
           </p>
@@ -36,4 +43,6 @@ export default function Hero({ sampleReportHref }: { sampleReportHref?: string }
       </Container>
     </section>
   );
-}
+};
+
+export default Hero;
