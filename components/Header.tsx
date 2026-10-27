@@ -1,24 +1,27 @@
-// The top bar on every page: logo, section links, GitHub link, and the theme switcher.
+
 import Link from "next/link";
 import Container from "./Container";
+import HashCleaner from "./HashCleaner";
 import { GitHubIcon, LogoIcon } from "./Icons";
 import ThemeToggle from "./ThemeToggle";
 
-// Links to sections on the Home page. "/#how" works from any page, not just Home.
+
 const NAV_LINKS = [
   { href: "/#how", label: "How it works" },
   { href: "/#rules", label: "What it checks" },
 ];
 
 interface HeaderProps {
-  githubUrl: string; // link to this project's source code
+  githubUrl: string; 
 }
 
 const Header = ({ githubUrl }: HeaderProps) => {
   return (
     <header className="border-b border-line bg-surface">
+     
+      <HashCleaner />
       <Container className="flex flex-wrap items-center justify-between gap-4 py-3.5">
-        {/* Logo doubles as a "go home" link */}
+        
         <Link href="/" className="flex min-h-11 items-center gap-2.5 text-foreground">
           <LogoIcon />
           <span className="text-lg font-bold tracking-tight">UpgradeLens</span>
@@ -41,7 +44,7 @@ const Header = ({ githubUrl }: HeaderProps) => {
             <GitHubIcon />
             GitHub
           </a>
-          {/* Light / System / Dark */}
+         
           <div className="ml-1">
             <ThemeToggle />
           </div>
