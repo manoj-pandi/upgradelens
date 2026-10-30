@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Sample code the scanner reads in tests. It's old-style on purpose, so don't lint it.
+    "tests/fixtures/**",
   ]),
 ]);
 
